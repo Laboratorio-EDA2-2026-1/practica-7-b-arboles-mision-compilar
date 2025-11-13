@@ -1,2 +1,136 @@
-Implementa aquí todos los procesos necesarios para la operación de eliminación. 
-Pueden modificar la extensión del documento para que se ajuste al lenguaje de su elección y comentar estas instrucciones.
+#Implementa aquí todos los procesos necesarios para la operación de eliminación. 
+#Pueden modificar la extensión del documento para que se ajuste al lenguaje de su elección y comentar estas instrucciones.
+
+#Eliminación en un B-árbol
+#Cada nodo se representa como un diccionario:
+#t->grado mínimo del B-árbol
+
+def eliminar(arbol, clave, t):
+    eliminarEnNodo(arbol['raiz'], clave, t)
+
+    #Si después de borrar la raíz, queda vacía y no es una hoja, entonces el primer hijo se convierte en la nueva raíz! :)
+    if len(arbol['raiz']['claves'])==0 and not arbol['raiz']['esHoja']:
+        arbol['raiz'] = arbol['raiz']['hijos'][0]
+
+
+def eliminarEnNodo(nodo, clave, t): #Se elimina una clave dentro del subárbol con raíz en el nodo
+
+    i = 0
+
+    while i < len(nodo['claves']) and clave > nodo['claves'][i]: #Aquí Buscamos la poisición en donde debería de estar la clave
+        i=i+1
+
+    #Caso 1: Cuando la clave se encuentra en este nodo
+    if i<len(nodo['claves']) and nodo['claves'][i]==clave:
+        if nodo['esHoja']:
+            nodo['claves'].pop(i) #El nodo es una hoja y se elimina directamente
+        else:
+            eliminarEnNodoInterno(nodo, clave, i, t) #Es un nodo interno
+    else:
+        #Caso 2: La clave no se encuentra en este nodo
+        if nodo['esHoja']: #No se encuentra en ese árbol
+            return
+
+        if len(nodo['hijos'][i]['claves'])<t: #Verificamos si el hijo donde debería de estar tiene pocas claves
+            rellenar(nodo, i, t)
+
+        if i>len(nodo['claves']): #Si el último hijo fue combinado o fusionado, puede haberse movido
+            eliminarEnNodo(nodo['hijos'][i-1], clave, t)
+        else:
+            eliminarEnNodo(nodo['hijos'][i], clave, t)
+
+
+def eliminarEnNodoInterno(nodo, clave, i, t): #Elimina una clave que está en el nodo interno
+
+    hijoIzquierdo = nodo['hijos'][i]
+    hijoDerecho = nodo['hijos'][i+1]
+
+    if len(hijoIzquierdo['claves']) >= t: #El hijo izquierdo tiene al menos t cantidad de claves
+        pred = obtenerAnterior(hijoIzquierdo)
+        nodo['claves'][i] = pred
+        eliminarEnNodo(hijoIzquierdo, pred, t)
+
+    elif len(hijoDerecho['claves']) >= t: #El hijo derecho tiene al menos t cantidad de claves
+        suc = obtenerSiguiente(hijoDerecho)
+        nodo['claves'][i] = suc
+        eliminarEnNodo(hijoDerecho, suc, t)
+
+    else:
+        combinar(nodo, i, t) #Ambos hijos tienen menos de t cantidad de claves y se combinan o fusionan
+        eliminarEnNodo(hijoIzquierdo, clave, t)
+
+
+def obtenerAnterior(nodo): #Devuelve la clave más grande en el subárbol izquierdo
+
+    while not nodo['esHoja']:
+        nodo=nodo['hijos'][len(nodo['hijos'])-1]
+    return nodo['claves'][len(nodo['claves'])-1]
+
+
+def obtenerSiguiente(nodo): #Devuelve la clave más pequenia en el subárbol derecho
+
+    while not nodo['esHoja']:
+        nodo=nodo['hijos'][0]
+    return nodo['claves'][0]
+
+
+def rellenar(nodo, indice, t): #Asegura que el hijo en la posición del índice tenga al menos t cantidad de claves
+
+    if indice > 0 and len(nodo['hijos'][indice - 1]['claves'])>=t: #Se toma una clave del hermano izquierdo si es que es posible
+        tomarDeIzquierda(nodo, indice)
+
+    elif indice<len(nodo['hijos'])-1 and len(nodo['hijos'][indice + 1]['claves'])>=t: #Se toma una clave del hermano derecho si es que es posible
+        tomarDeDerecha(nodo, indice)
+    else:
+        if indice < len(nodo['hijos']) - 1:
+            combinar(nodo, indice, t) #En caso de que no se den los casos anteriores, se combina con un hermano
+        else:
+            combinar(nodo, indice-1, t)
+
+
+def tomarDeIzquierda(nodo, indice): #Toma una clave prestada del hermano izquierdo
+
+    hijo=nodo['hijos'][indice]
+    hermano=nodo['hijos'][indice-1]
+
+    hijo['claves'].insert(0, nodo['claves'][indice-1]) #Se mueve la clave del padre al hijo
+
+    nodo['claves'][indice-1]=hermano['claves'].pop(len(hermano['claves'])-1) #Se mueve la última clave del hermano al padre
+
+    if not hijo['esHoja']: #Si el hijo no es hoja, se debe mover también el último hijo del hermano
+        hijo['hijos'].insert(0, hermano['hijos'].pop(len(hermano['hijos'])-1))
+
+
+def tomarDeDerecha(nodo, indice): #Toma una clave prestada del hermano derecho
+
+    hijo=nodo['hijos'][indice]
+    hermano=nodo['hijos'][indice+1]
+
+    hijo['claves'].append(nodo['claves'][indice]) #Se mueve la clave del padre al hijo
+
+    nodo['claves'][indice]=hermano['claves'].pop(0) #Se mueve la primera clave del hermano al padre
+
+    if not hijo['esHoja']: #Si el hijo no es una hoja, entonces se debe mover también el primer hijo del hermano
+        hijo['hijos'].append(hermano['hijos'].pop(0))
+
+
+def combinar(nodo, indice, t): #Fusiona el hijo en el parámetro indice con su hermano del lado derecho :)
+
+    hijo=nodo['hijos'][indice]
+    hermano = nodo['hijos'][indice+1]
+
+    hijo['claves'].append(nodo['claves'][indice]) #Se añade la clave del padre en medio
+
+    j=0 #Aquí se pasan las claves del hermano al hijo 
+    while j<len(hermano['claves']):
+        hijo['claves'].append(hermano['claves'][j])
+        j=j+1
+
+    if not hijo['esHoja']: #En caso de que no sea una hoja, pasa los hijos del hermano
+        j=0
+        while j<len(hermano['hijos']):
+            hijo['hijos'].append(hermano['hijos'][j])
+            j=j+1
+
+    nodo['claves'].pop(indice) #Se elimina la clave tanto del padre como del hermano fusionado
+    nodo['hijos'].pop(indice + 1)
