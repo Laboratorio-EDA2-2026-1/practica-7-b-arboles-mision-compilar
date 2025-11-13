@@ -1,2 +1,26 @@
-Implementa aquí la operación de búsqueda. 
-Pueden modificar la extensión del documento para que se ajuste al lenguaje de su elección y comentar estas instrucciones.
+#Implementa aquí la operación de búsqueda. 
+#Pueden modificar la extensión del documento para que se ajuste al lenguaje de su elección y comentar estas instrucciones.
+
+#Operación de búsqueda en un B-árbol
+#Parámetros:
+#nodo->nodo actual del árbol (diccionario con 'claves' e 'hijos')
+#clave->valor que se desea buscar
+#Devuelve:
+#True->si la clave se encuentra en el árbol
+#Falso->si la clave no está
+
+
+def buscar(nodo, clave):
+    i = 0
+
+    while i < len(nodo['claves']) and clave > nodo['claves'][i]: #Mientras la clave buscada sea mayor que la actual, avanzará
+        i += 1
+        
+    if i < len(nodo['claves']) and nodo['claves'][i] == clave: #Caso cuando la clave está en el nodo actual
+        return True
+    
+    if nodo['esHoja']: #Si el nodo es una hoja, la clave no se encuentra
+        return False
+
+    return buscar(nodo['hijos'][i], clave) #Si no es una hoja, busca de forma recursiva en los hijos hasta encontrarla :)
+
