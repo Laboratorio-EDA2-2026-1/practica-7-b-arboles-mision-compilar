@@ -1,2 +1,69 @@
-Implementa aquí todos los procesos necesarios para la operación de inserción. 
-Pueden modificar la extensión del documento para que se ajuste al lenguaje de su elección y comentar estas instrucciones.
+#Implementa aquí todos los procesos necesarios para la operación de inserción. 
+#Pueden modificar la extensión del documento para que se ajuste al lenguaje de su elección y comentar estas instrucciones.
+
+#Operaciones de inserción en un B-árbol
+#Cada nodo se representa con un diccionario
+#El B-árbol tiene un grado mínimo t
+
+def dividirHijo(padre, indice, t):
+
+    hijo = padre['hijos'][indice] #Se divide el hijo del nodo padre, en dos nodos
+    nuevo = {
+        'claves': hijo['claves'][t:],   #Estas son las mitades superiores
+        'hijos': [],
+        'esHoja': hijo['esHoja']
+    }
+
+    if not hijo['esHoja']: #Si el hijo no es hoja, se dividen también los hijos
+        nuevo['hijos'] = hijo['hijos'][t:] #Copia todos los elementos desde la posición t hasta el final de la lista hijo['hijos']
+        hijo['hijos'] = hijo['hijos'][:t] #Conservar solo los primeros t elementos de la lista hijo['hijos']
+
+    padre['claves'].insert(indice, hijo['claves'][t - 1]) #Sube la clave del medio al padre
+
+    hijo['claves'] = hijo['claves'][:t - 1] #Aquí se ajusta la lista de clavez del hijo
+
+    padre['hijos'].insert(indice + 1, nuevo) #Se inserta un nuevo hijo a la derecha del actual
+
+
+def insertarNoLleno(nodo, clave, t): #Inserta una clave en un nodo que NO esté lleno
+
+    i=len(nodo['claves'])-1
+
+    if nodo['esHoja']:
+        
+        nodo['claves'].append(0) #Inserta la nueva clave en orden ascendente :)
+        while i>=0 and clave<nodo['claves'][i]:
+            nodo['claves'][i+1] = nodo['claves'][i]
+            i-=1
+        nodo['claves'][i+1] = clave
+    else:
+
+        while i>=0 and clave < nodo['claves'][i]: #Busca el hijo donde deberia de ir la nueva clave
+            i-=1
+        i+=1
+
+        if len(nodo['hijos'][i]['claves'])==2*t-1: #Si el hijo está lleno, se divide
+            dividirHijo(nodo, i, t)
+            if clave>nodo['claves'][i]:
+                i+=1
+        insertarNoLleno(nodo['hijos'][i], clave, t)
+
+
+def insertar(arbol, clave, t): #Se inserta una nueva clave para que el B-árbol esté completo
+
+    raiz=arbol['raiz']
+
+    if len(raiz['claves'])==2*t-1: #Si la raíz se encuentra llena, no pasa nada, crea una nueva :)
+        nuevaRaiz={
+            'claves':[],
+            'hijos':[raiz],
+            'esHoja':False
+        }
+        dividirHijo(nuevaRaiz, 0, t)
+        i=0
+        if clave>nuevaRaiz['claves'][0]:
+            i+=1
+        insertarNoLleno(nuevaRaiz['hijos'][i], clave, t)
+        arbol['raiz'] = nuevaRaiz
+    else:
+        insertarNoLleno(raiz, clave, t)
